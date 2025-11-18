@@ -9,8 +9,8 @@ from src.utils import device
 
 # === Chargement du modèle entraîné ===
 dev = device()
-model = get_model("resnet50", num_classes=2, pretrained=True).to(dev)
-model.load_state_dict(torch.load("model.pth", map_location=dev))
+model = get_model("resnet50", num_classes=2, pretrained=False).to(dev)
+model.load_state_dict(torch.load("model_resnet50.pth", map_location=dev))
 model.eval()
 
 # === Chargement des données de test ===
@@ -35,11 +35,11 @@ with torch.no_grad():
 
 y_true, y_pred, y_scores = np.array(y_true), np.array(y_pred), np.array(y_scores)
 
-# === 1️⃣ Matrice de confusion ===
+# === 1️⃣ Matrice de confusion (seuil 0.5 par défaut) ===
 cm = confusion_matrix(y_true, y_pred)
 print("\nMatrice de confusion :\n", cm)
 
-# === 2️⃣ Rapport de classification ===
+# === 2️⃣ Rapport de classification (seuil 0.5) ===
 print("\nRapport de classification :\n", classification_report(y_true, y_pred, digits=3))
 
 # === 3️⃣ Courbe ROC / AUC ===
@@ -49,26 +49,27 @@ print(f"AUC : {roc_auc:.3f}")
 
 plt.figure(figsize=(6,5))
 plt.plot(fpr, tpr, label=f"ROC (AUC={roc_auc:.3f})")
-plt.plot([0,1],[0,1],"--",color="gray")
+plt.plot([0,1], [0,1], "--", color="gray")
 plt.xlabel("Taux de faux positifs")
 plt.ylabel("Taux de vrais positifs")
-plt.title("Courbe ROC - Détection du cancer de la peau")
+plt.title("Courbe ROC - Détection du cancer de la peau ")
 plt.legend()
 plt.show()
 
-# === 4️⃣ Seuil optimal ===
+# === 4️⃣ Seuil optimal (Youden J) ===
 j_scores = tpr - fpr
 best_idx = np.argmax(j_scores)
 best_thresh = thresholds[best_idx]
 print(f"Seuil optimal = {best_thresh:.3f}")
+
 # === 5️⃣ Évaluation avec le seuil optimal ===
-chosen_thresh = 0.29  # seuil trouvé par la courbe ROC
+chosen_thresh = best_thresh  # on utilise le meilleur seuil trouvé pour EfficientNet
 
 # Recalcul des prédictions avec ce seuil
 y_pred_new = (y_scores >= chosen_thresh).astype(int)
 
 # Nouvelle matrice de confusion et rapport
 cm_new = confusion_matrix(y_true, y_pred_new)
-print("\nMatrice de confusion (seuil 0.29) :\n", cm_new)
-print("\nRapport de classification (seuil 0.29) :\n",
+print(f"\nMatrice de confusion (seuil {chosen_thresh:.3f}) :\n", cm_new)
+print(f"\nRapport de classification (seuil {chosen_thresh:.3f}) :\n",
       classification_report(y_true, y_pred_new, digits=3))
