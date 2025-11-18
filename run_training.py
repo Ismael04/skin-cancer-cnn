@@ -1,4 +1,3 @@
-# run_training.py — Entraînement ResNet50 (finetuning complet)
 
 import torch
 import torch.nn as nn
@@ -7,13 +6,13 @@ from src.data import get_dataloaders
 from src.models import get_model
 from src.utils import set_seed, device
 
-# ========= CONFIG =========
+
 cfg = {
     "seed": 42,
     "img_size": 128,
     "batch_size": 8,
-    "epochs": 3,           # même nombre que EfficientNet pour comparaison juste
-    "lr": 1e-4,            # IMPORTANT pour le finetuning ResNet
+    "epochs": 3,
+    "lr": 1e-4,
     "weight_decay": 1e-4,
     "num_workers": 0
 }
@@ -21,7 +20,6 @@ cfg = {
 MODEL_NAME = "resnet50"
 SAVE_PATH = f"model_{MODEL_NAME}.pth"
 
-# ==========================
 
 set_seed(cfg["seed"])
 dev = device()
@@ -29,7 +27,7 @@ print("Device:", dev)
 print("Modèle entraîné :", MODEL_NAME)
 print("Fichier de sortie :", SAVE_PATH)
 
-# === Data ===
+
 _, _, _, train_dl, val_dl, _ = get_dataloaders(
     data_dir="data",
     img_size=cfg["img_size"],
@@ -37,13 +35,12 @@ _, _, _, train_dl, val_dl, _ = get_dataloaders(
     num_workers=cfg["num_workers"],
 )
 
-# === Modèle (ResNet50 pré-entraîné) ===
 model = get_model(MODEL_NAME, num_classes=2, pretrained=True).to(dev)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
 
-# === Entraînement ===
+
 for epoch in range(1, cfg["epochs"] + 1):
     model.train()
     total, correct, running = 0, 0, 0.0
@@ -65,7 +62,7 @@ for epoch in range(1, cfg["epochs"] + 1):
     train_acc = correct / total
     print(f"[{epoch}] loss={train_loss:.4f}  acc={train_acc:.3f}")
 
-    # validation
+
     model.eval()
     v_total, v_correct = 0, 0
     with torch.no_grad():
@@ -77,7 +74,7 @@ for epoch in range(1, cfg["epochs"] + 1):
     val_acc = v_correct / v_total
     print(f"    -> Val acc: {val_acc:.3f}")
 
-# === Sauvegarde ===
+
 torch.save(model.state_dict(), SAVE_PATH)
 print(f"💾 Modèle sauvegardé sous '{SAVE_PATH}'")
 print("✅ Finetuning ResNet50 terminé.")

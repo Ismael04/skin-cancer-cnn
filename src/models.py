@@ -31,7 +31,6 @@ def get_model(name="cnn_custom", num_classes=2, pretrained=True):
         return SmallCNN(num_classes)
     if name in ["resnet50","resnet"]:
         return build_resnet50(num_classes, pretrained)
-    # ICI on ajoute EfficientNet
     if name in ["efficientnet_b0", "efficientnet", "effnet"]:
         return build_efficientnet_b0(num_classes, pretrained)
     raise ValueError(f"Unknown model: {name}")

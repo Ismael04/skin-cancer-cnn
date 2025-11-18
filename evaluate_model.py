@@ -1,4 +1,4 @@
-# evaluate_model.py — évaluation complète du modèle
+
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,13 +7,11 @@ from src.data import get_dataloaders
 from src.models import get_model
 from src.utils import device
 
-# === Chargement du modèle entraîné ===
 dev = device()
 model = get_model("resnet50", num_classes=2, pretrained=False).to(dev)
 model.load_state_dict(torch.load("model_resnet50.pth", map_location=dev))
 model.eval()
 
-# === Chargement des données de test ===
 _, _, test_ds, _, _, test_dl = get_dataloaders(
     data_dir="data",
     img_size=128,
@@ -35,14 +33,11 @@ with torch.no_grad():
 
 y_true, y_pred, y_scores = np.array(y_true), np.array(y_pred), np.array(y_scores)
 
-# === 1️⃣ Matrice de confusion (seuil 0.5 par défaut) ===
 cm = confusion_matrix(y_true, y_pred)
 print("\nMatrice de confusion :\n", cm)
 
-# === 2️⃣ Rapport de classification (seuil 0.5) ===
 print("\nRapport de classification :\n", classification_report(y_true, y_pred, digits=3))
 
-# === 3️⃣ Courbe ROC / AUC ===
 fpr, tpr, thresholds = roc_curve(y_true, y_scores)
 roc_auc = auc(fpr, tpr)
 print(f"AUC : {roc_auc:.3f}")
@@ -56,19 +51,14 @@ plt.title("Courbe ROC - Détection du cancer de la peau ")
 plt.legend()
 plt.show()
 
-# === 4️⃣ Seuil optimal (Youden J) ===
 j_scores = tpr - fpr
 best_idx = np.argmax(j_scores)
 best_thresh = thresholds[best_idx]
 print(f"Seuil optimal = {best_thresh:.3f}")
 
-# === 5️⃣ Évaluation avec le seuil optimal ===
-chosen_thresh = best_thresh  # on utilise le meilleur seuil trouvé pour EfficientNet
-
-# Recalcul des prédictions avec ce seuil
+chosen_thresh = best_thresh
 y_pred_new = (y_scores >= chosen_thresh).astype(int)
 
-# Nouvelle matrice de confusion et rapport
 cm_new = confusion_matrix(y_true, y_pred_new)
 print(f"\nMatrice de confusion (seuil {chosen_thresh:.3f}) :\n", cm_new)
 print(f"\nRapport de classification (seuil {chosen_thresh:.3f}) :\n",

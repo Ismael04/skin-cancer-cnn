@@ -1,16 +1,13 @@
-# src/data.py
+
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader
 
-# Transformations simples:
-# - redimensionner à 224x224
-# - convertir en tenseur
-# - normaliser (valeurs standard ImageNet, ça marche bien avec les CNN)
+
 def get_transforms(img_size=224):
     train_tf = transforms.Compose([
         transforms.Resize((img_size, img_size)),
-        transforms.RandomHorizontalFlip(),        # un peu d'augmentation
+        transforms.RandomHorizontalFlip(),
         transforms.RandomRotation(15),
         transforms.ToTensor(),
         transforms.Normalize([0.485,0.456,0.406],[0.229,0.224,0.225]),
@@ -23,13 +20,7 @@ def get_transforms(img_size=224):
     return train_tf, val_tf
 
 def get_dataloaders(data_dir="data", img_size=224, batch_size=16, num_workers=2):
-    """
-    Attend une structure:
-    data/
-      train/benign|malignant
-      val/benign|malignant
-      test/benign|malignant
-    """
+
     train_tf, val_tf = get_transforms(img_size)
 
     train_ds = ImageFolder(f"{data_dir}/train", transform=train_tf)

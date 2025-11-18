@@ -2,7 +2,7 @@
 import random, numpy as np, torch
 
 def set_seed(seed=42):
-    """Pour des résultats reproductibles (pas obligatoire mais utile)."""
+
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -12,5 +12,4 @@ def set_seed(seed=42):
     torch.backends.cudnn.benchmark = False
 
 def device():
-    """Retourne 'cuda' si GPU dispo, sinon 'cpu'. Sur Intel, ce sera 'cpu'."""
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
