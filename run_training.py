@@ -24,8 +24,8 @@ SAVE_PATH = f"model_{MODEL_NAME}.pth"
 set_seed(cfg["seed"])
 dev = device()
 print("Device:", dev)
-print("Modèle entraîné :", MODEL_NAME)
-print("Fichier de sortie :", SAVE_PATH)
+print("Model train :", MODEL_NAME)
+print("output file :", SAVE_PATH)
 
 
 _, _, _, train_dl, val_dl, _ = get_dataloaders(

@@ -1,4 +1,3 @@
-
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
@@ -34,9 +33,9 @@ with torch.no_grad():
 y_true, y_pred, y_scores = np.array(y_true), np.array(y_pred), np.array(y_scores)
 
 cm = confusion_matrix(y_true, y_pred)
-print("\nMatrice de confusion :\n", cm)
+print("\n Confusion Matrix :\n", cm)
 
-print("\nRapport de classification :\n", classification_report(y_true, y_pred, digits=3))
+print("\n Classification Report :\n", classification_report(y_true, y_pred, digits=3))
 
 fpr, tpr, thresholds = roc_curve(y_true, y_scores)
 roc_auc = auc(fpr, tpr)
@@ -45,21 +44,21 @@ print(f"AUC : {roc_auc:.3f}")
 plt.figure(figsize=(6,5))
 plt.plot(fpr, tpr, label=f"ROC (AUC={roc_auc:.3f})")
 plt.plot([0,1], [0,1], "--", color="gray")
-plt.xlabel("Taux de faux positifs")
-plt.ylabel("Taux de vrais positifs")
-plt.title("Courbe ROC - Détection du cancer de la peau ")
+plt.xlabel("False Positive Rate")
+plt.ylabel("True Positive Rate")
+plt.title("Courbe ROC - Skin care Detection ")
 plt.legend()
 plt.show()
 
 j_scores = tpr - fpr
 best_idx = np.argmax(j_scores)
 best_thresh = thresholds[best_idx]
-print(f"Seuil optimal = {best_thresh:.3f}")
+print(f"Optimal Thresh = {best_thresh:.3f}")
 
 chosen_thresh = best_thresh
 y_pred_new = (y_scores >= chosen_thresh).astype(int)
 
 cm_new = confusion_matrix(y_true, y_pred_new)
-print(f"\nMatrice de confusion (seuil {chosen_thresh:.3f}) :\n", cm_new)
-print(f"\nRapport de classification (seuil {chosen_thresh:.3f}) :\n",
+print(f"\n Confusion Matrix (Thresh {chosen_thresh:.3f}) :\n", cm_new)
+print(f"\n Classification Report (Thresh {chosen_thresh:.3f}) :\n",
       classification_report(y_true, y_pred_new, digits=3))
