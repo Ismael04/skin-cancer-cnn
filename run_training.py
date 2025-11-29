@@ -37,8 +37,17 @@ _, _, _, train_dl, val_dl, _ = get_dataloaders(
 
 model = get_model(MODEL_NAME, num_classes=2, pretrained=True).to(dev)
 
+for name, param in model.named_parameters():
+    if name.startswith("layer4") or name.startswith("fc"):
+        param.requires_grad = True
+    else:
+        param.requires_grad = False
+
+trainable_params = [p for p in model.parameters() if p.requires_grad]
+
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
+optimizer = optim.Adam(trainable_params, lr=cfg["lr"], weight_decay=cfg["weight_decay"])
+
 
 
 for epoch in range(1, cfg["epochs"] + 1):
