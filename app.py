@@ -95,7 +95,7 @@ def predict(image: Image.Image, model_name: str):
         f"Benign probability :  {p_benign:.3f}\n"
         f"Malignant probability : {p_malignant:.3f}\n"
         f"Threshold for 'cancer' : {threshold:.3f}\n\n"
-        f"⚠️ This tool is an AI assistant and does NOT replace a dermatologist."
+        f"⚠️ This tool is an assistant and does NOT replace a dermatologist."
     )
 
     return text
@@ -121,8 +121,7 @@ iface = gr.Interface(
     title="Skin Cancer Detection — Diagnostic Assistant",
     description=(
         "Upload a skin lesion image and choose a model "
-        "(Custom CNN, EfficientNet-B0, or ResNet-50). The model predicts "
-        "whether the lesion is benign or malignant."
+
     ),
 )
 
