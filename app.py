@@ -6,15 +6,48 @@ import gradio as gr
 from src.models import get_model
 from src.utils import device
 
+
 dev = device()
-print("Device utilisé :", dev)
+print("Device used:", dev)
 
-MODEL_NAME = "resnet50"
-MODEL_PATH = "model_resnet50.pth"
 
-model = get_model(MODEL_NAME, num_classes=2, pretrained=False).to(dev)
-model.load_state_dict(torch.load(MODEL_PATH, map_location=dev))
-model.eval()
+MODEL_INFOS = {
+    "resnet50": {
+        "path": "model_resnet50.pth",
+        "label": "ResNet-50 (Transfer Learning)"
+    },
+    "efficientnet_b0": {
+        "path": "model_efficientnet_b0.pth",
+        "label": "EfficientNet-B0"
+    },
+    "cnn_custom": {
+        "path": "model_cnn_custom.pth",
+        "label": "Custom CNN"
+    },
+}
+
+
+THRESHOLDS = {
+    "cnn_custom": 0.531,
+    "efficientnet_b0": 0.656,
+    "resnet50": 0.487,
+}
+
+
+MODELS = {}
+
+for name, info in MODEL_INFOS.items():
+    try:
+        print(f"Loading model '{name}' from {info['path']} ...")
+        model = get_model(name, num_classes=2, pretrained=False).to(dev)
+        state = torch.load(info["path"], map_location=dev)
+        model.load_state_dict(state)
+        model.eval()
+        MODELS[name] = model
+        print("  -> Loaded successfully")
+    except Exception as e:
+        print(f"  !! Failed to load {name}: {e}")
+
 
 IMG_SIZE = 128
 
@@ -27,13 +60,19 @@ val_tf = transforms.Compose([
 
 CLASSES = ["benign (non-cancer)", "malignant (cancer)"]
 
-THRESHOLD = 0.48
+def predict(image: Image.Image, model_name: str):
 
 
-def predict(image: Image.Image):
+    if image is None:
+        return "Please upload an image first."
 
-    x = val_tf(image).unsqueeze(0).to(dev)   # (1, 3, H, W)
+    if model_name not in MODELS:
+        return f"Model '{model_name}' is not available."
 
+    model = MODELS[model_name]
+    threshold = THRESHOLDS.get(model_name, 0.5)
+
+    x = val_tf(image).unsqueeze(0).to(dev)
     with torch.no_grad():
         logits = model(x)
         probs = torch.softmax(logits, dim=1)[0].cpu().numpy()
@@ -41,36 +80,52 @@ def predict(image: Image.Image):
     p_benign = float(probs[0])
     p_malignant = float(probs[1])
 
-    has_cancer = p_malignant >= THRESHOLD
+    has_cancer = p_malignant >= threshold
 
     if has_cancer:
-        diagnosis = "⚠️ Suspicion of skin cancer"
+        diagnosis = "⚠️ Suspicion of SKIN CANCER (malignant)"
     else:
-        diagnosis = "✅ Probably benign"
+        diagnosis = "✅ Likely benign lesion (non-cancer)"
 
-    # 4) Texte lisible pour le médecin
+    model_label = MODEL_INFOS[model_name]["label"]
+
     text = (
+        f"Model used: {model_label}\n"
         f"{diagnosis}\n\n"
-        f"benign probs :  {p_benign:.3f}\n"
-        f"malignant probs : {p_malignant:.3f}\n"
-        f"Threshold use for 'cancer' : {THRESHOLD:.2f}\n\n"
-        f"⚠️ Attention : This model is diagnostic aid tool, "
-        f" This does not replace a dermatologist opinion."
+        f"Benign probability :  {p_benign:.3f}\n"
+        f"Malignant probability : {p_malignant:.3f}\n"
+        f"Threshold for 'cancer' : {threshold:.3f}\n\n"
+        f"⚠️ This tool is an AI assistant and does NOT replace a dermatologist."
     )
 
     return text
 
 
+model_dropdown = gr.Dropdown(
+    choices=[
+        ("ResNet-50 (Transfer Learning)", "resnet50"),
+        ("EfficientNet-B0", "efficientnet_b0"),
+        ("Custom CNN", "cnn_custom"),
+    ],
+    value="resnet50",
+    label="Choose model",
+)
 
 iface = gr.Interface(
     fn=predict,
-    inputs=gr.Image(type="pil", label="Image"),
+    inputs=[
+        gr.Image(type="pil", label="Skin lesion image"),
+        model_dropdown,
+    ],
     outputs=gr.Textbox(label="Model result"),
-    title="Skin Cancer Detection - Diagnostic",
+    title="Skin Cancer Detection — Diagnostic Assistant",
     description=(
-        "Put your image"
-    )
+        "Upload a skin lesion image and choose a model "
+        "(Custom CNN, EfficientNet-B0, or ResNet-50). The model predicts "
+        "whether the lesion is benign or malignant."
+    ),
 )
+
 
 if __name__ == "__main__":
     iface.launch()
